@@ -1,4 +1,4 @@
-;;; ace-jump-mode.el --- a quick cursor location minor mode for emacs -*- coding: utf-8-unix -*-
+;;; ace-jump-mode.el --- a quick cursor location minor mode for emacs -*- coding: utf-8-unix; lexical-binding: t -*-
 
 ;; Copyright (C) 2012 Free Software Foundation, Inc.
 
@@ -461,33 +461,33 @@ node and call LEAF-FUNC on each leaf node"
 (defun ace-jump-populate-overlay-to-search-tree (tree candidate-list)
   "Populate the overlay to search tree, every leaf will give one overlay"
 
-  (lexical-let* (;; create the locally dynamic variable for the following function
-                 (position-list candidate-list)
-                 ;; make the function to create overlay for each leaf node,
-                 ;; here we only create each overlay for each candidate
-                 ;; position, , but leave the 'display property to be empty,
-                 ;; which will be fill in "update-overlay" function
-                 (func-create-overlay (lambda (node)
-                                        (let* ((p (car position-list))
-                                               (o (aj-position-offset p))
-                                               (w (aj-position-window p))
-                                               (b (aj-position-buffer p))
-                                               ;; create one char overlay
-                                               (ol (make-overlay o (1+ o) b)))
-                                          ;; update leaf node to remember the ol
-                                          (setf (cdr node) ol)
-                                          (overlay-put ol 'face 'ace-jump-face-foreground)
-                                          ;; this is important, because sometimes the different
-                                          ;; window may dispaly the same buffer, in that case,
-                                          ;; overlay for different window (but the same buffer)
-                                          ;; will show at the same time on both window
-                                          ;; So we make it only on the specific window
-                                          (overlay-put ol 'window w)
-                                          ;; associate the aj-position data with overlay
-                                          ;; so that we can use it to do the final jump
-                                          (overlay-put ol 'aj-data p)
-                                          ;; next candidate node
-                                          (setq position-list (cdr position-list))))))
+  (let* (;; create the locally dynamic variable for the following function
+         (position-list candidate-list)
+         ;; make the function to create overlay for each leaf node,
+         ;; here we only create each overlay for each candidate
+         ;; position, , but leave the 'display property to be empty,
+         ;; which will be fill in "update-overlay" function
+         (func-create-overlay (lambda (node)
+                                (let* ((p (car position-list))
+                                       (o (aj-position-offset p))
+                                       (w (aj-position-window p))
+                                       (b (aj-position-buffer p))
+                                       ;; create one char overlay
+                                       (ol (make-overlay o (1+ o) b)))
+                                  ;; update leaf node to remember the ol
+                                  (setf (cdr node) ol)
+                                  (overlay-put ol 'face 'ace-jump-face-foreground)
+                                  ;; this is important, because sometimes the different
+                                  ;; window may dispaly the same buffer, in that case,
+                                  ;; overlay for different window (but the same buffer)
+                                  ;; will show at the same time on both window
+                                  ;; So we make it only on the specific window
+                                  (overlay-put ol 'window w)
+                                  ;; associate the aj-position data with overlay
+                                  ;; so that we can use it to do the final jump
+                                  (overlay-put ol 'aj-data p)
+                                  ;; next candidate node
+                                  (setq position-list (cdr position-list))))))
     (ace-jump-tree-preorder-traverse tree func-create-overlay)
     tree))
 
@@ -508,33 +508,33 @@ node and call LEAF-FUNC on each leaf node"
 
 (defun ace-jump-update-overlay-in-search-tree (tree keys)
   "Update overlay 'display property using each name in keys"
-  (lexical-let* (;; create dynamic variable for following function
-                 (key ?\0)
-                 ;; populdate each leaf node to be the specific key,
-                 ;; this only update 'display' property of overlay,
-                 ;; so that user can see the key from screen and select
-                 (func-update-overlay
-                  (lambda (node)
-                    (let ((ol (cdr node)))
-                      (overlay-put
-                       ol
-                       'display
-                       (concat (make-string 1 key)
-                               (let* ((pos (overlay-get ol 'aj-data))
-                                      (subs (ace-jump-buffer-substring pos)))
-                                 (cond
-                                  ;; when tab, we use more space to prevent screen
-                                  ;; from messing up
-                                  ((string-equal subs "\t")
-                                   (make-string (1- tab-width) ? ))
-                                  ;; when enter, we need to add one more enter
-                                  ;; to make the screen not change
-                                  ((string-equal subs "\n")
-                                   "\n")
-                                  (t
-                                   ;; there are wide-width characters
-                                   ;; so, we need paddings
-                                   (make-string (max 0 (1- (string-width subs))) ? ))))))))))
+  (let* (;; create dynamic variable for following function
+         (key ?\0)
+         ;; populdate each leaf node to be the specific key,
+         ;; this only update 'display' property of overlay,
+         ;; so that user can see the key from screen and select
+         (func-update-overlay
+          (lambda (node)
+            (let ((ol (cdr node)))
+              (overlay-put
+               ol
+               'display
+               (concat (make-string 1 key)
+                       (let* ((pos (overlay-get ol 'aj-data))
+                              (subs (ace-jump-buffer-substring pos)))
+                         (cond
+                          ;; when tab, we use more space to prevent screen
+                          ;; from messing up
+                          ((string-equal subs "\t")
+                           (make-string (1- tab-width) ? ))
+                          ;; when enter, we need to add one more enter
+                          ;; to make the screen not change
+                          ((string-equal subs "\n")
+                           "\n")
+                          (t
+                           ;; there are wide-width characters
+                           ;; so, we need paddings
+                           (make-string (max 0 (1- (string-width subs))) ? ))))))))))
     (cl-loop for k in keys
              for n in (cdr tree)
              do (progn
@@ -757,7 +757,7 @@ You can control whether use the case sensitive via `ace-jump-mode-case-fold'.
               ;;             +---+---+---+                                       +---+---+---+
               ;;
               ;; So what we need to do, is put the found mark in mark-ring to the end
-              (lexical-let ((po (aj-position-offset p)))
+              (let ((po (aj-position-offset p)))
                 (setq mark-ring
                       (ace-jump-move-first-to-end-if mark-ring
                                                      (lambda (x)
@@ -767,7 +767,7 @@ You can control whether use the case sensitive via `ace-jump-mode-case-fold'.
           ;; when we jump back to another buffer, do as the
           ;; pop-global-mark does. But we move the marker with the
           ;; same target buffer to the end, not always the first one
-          (lexical-let ((pb (aj-position-buffer p)))
+          (let ((pb (aj-position-buffer p)))
             (setq global-mark-ring
                   (ace-jump-move-first-to-end-if global-mark-ring
                                                  (lambda (x)
@@ -1025,8 +1025,8 @@ Such as : (lambda (x) (equal x 1)) "
 
 (defun ace-jump-move-first-to-end-if (l pred)
   "Only move the first found one to the end of list"
-  (lexical-let ((pred pred)
-                found)
+  (let ((pred pred)
+        found)
     (ace-jump-move-to-end-if l
                              (lambda (x)
                                (if found
@@ -1036,8 +1036,8 @@ Such as : (lambda (x) (equal x 1)) "
 (defadvice pop-mark (before ace-jump-pop-mark-advice)
   "When `pop-mark' is called to jump back, this advice will sync the mark ring.
 Move the same position to the end of `ace-jump-mode-mark-ring'."
-  (lexical-let ((mp (mark t))
-                (cb (current-buffer)))
+  (let ((mp (mark t))
+        (cb (current-buffer)))
     (if mp
         (setq ace-jump-mode-mark-ring
               (ace-jump-move-first-to-end-if ace-jump-mode-mark-ring
@@ -1057,7 +1057,7 @@ Move the aj-position with the same buffer to the end of `ace-jump-mode-mark-ring
       (setq index (cdr index)))
     (if index
         ;; find the mark
-        (lexical-let ((mb (marker-buffer (car index))))
+        (let ((mb (marker-buffer (car index))))
           (setq ace-jump-mode-mark-ring
                 (ace-jump-move-to-end-if ace-jump-mode-mark-ring
                                          (lambda (x)
